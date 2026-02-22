@@ -86,6 +86,11 @@ What persists cleanly today:
 - **Node global tools (npm/pnpm):** this template configures defaults so global installs land under `/data`:
   - npm globals: `/data/npm` (binaries in `/data/npm/bin`)
   - pnpm globals: `/data/pnpm` (binaries) + `/data/pnpm-store` (store)
+- **CLI auth/config persistence:** startup bootstrap links ephemeral home paths to persistent state:
+  - GitHub CLI: `/root/.config/gh` -> `/data/.openclaw/credentials/gh`
+  - Railway CLI: `/root/.railway` -> `/data/.openclaw/credentials/railway`
+  - npm auth: `/root/.npmrc` -> `/data/.openclaw/credentials/npm/.npmrc`
+  - pnpm config: `/root/.config/pnpm` -> `/data/.openclaw/credentials/pnpm`
 - **Python packages:** create a venv under `/data` (example below). The runtime image includes Python + venv support.
 
 What does *not* persist cleanly:
@@ -95,7 +100,18 @@ What does *not* persist cleanly:
 ### Optional bootstrap hook
 
 If `/data/workspace/bootstrap.sh` exists, the wrapper will run it on startup (best-effort) before starting the gateway.
-Use this to initialize persistent install prefixes or create a venv.
+Use this to initialize persistent install prefixes, tool auth paths, or create a venv.
+
+This template now includes `bootstrap.sh` in-repo for idempotent persistence wiring.
+
+### Token-first auth (recommended for rebuild-proof automation)
+
+For fully headless rebuild resilience, set tokens as environment variables:
+
+- `GH_TOKEN` (repo-scoped, least privilege)
+- `RAILWAY_TOKEN`
+
+The bootstrap keeps CLI config paths persistent and can hydrate auth non-interactively when these env vars are present.
 
 Example `bootstrap.sh`:
 

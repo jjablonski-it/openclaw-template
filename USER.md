@@ -9,6 +9,7 @@
   - Keep responses concise, concrete, and low-fluff
   - When making repo changes that trigger Railway rebuilds, push to GitHub as the final step in a change batch
   - Prefer persistent, restart-safe configuration for all tools/services (state, auth, and runtime paths)
+  - For plans/itineraries, prefer loose suggestion lists over strict schedules (JJ is spontaneous)
 
 ## Context
 
