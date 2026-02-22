@@ -7,6 +7,7 @@ import path from "node:path";
 import express from "express";
 import httpProxy from "http-proxy";
 import * as tar from "tar";
+import { buildVisuals } from "./mdx-publisher.js";
 
 // Migrate deprecated CLAWDBOT_* env vars → OPENCLAW_* so existing Railway deployments
 // keep working. Users should update their Railway Variables to use the new names.
@@ -39,6 +40,12 @@ const STATE_DIR =
 const WORKSPACE_DIR =
   process.env.OPENCLAW_WORKSPACE_DIR?.trim() ||
   path.join(STATE_DIR, "workspace");
+
+const NOTES_DIR = process.env.OPENCLAW_NOTES_DIR?.trim() || "/data/notes";
+const VISUALS_SRC_DIR = process.env.OPENCLAW_VISUALS_SRC_DIR?.trim() || path.join(NOTES_DIR, "visuals");
+const VISUALS_OUT_DIR = process.env.OPENCLAW_VISUALS_OUT_DIR?.trim() || "/data/publish/html";
+const VISUALS_ROUTE = process.env.OPENCLAW_VISUALS_ROUTE?.trim() || "/stories";
+const VISUALS_PASSWORD = process.env.OPENCLAW_VISUALS_PASSWORD?.trim();
 
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
@@ -295,9 +302,33 @@ function requireSetupAuth(req, res, next) {
   return next();
 }
 
+function requireVisualsAuth(req, res, next) {
+  if (!VISUALS_PASSWORD) {
+    return res.status(503).type("text/plain").send("Visuals route is not configured yet.");
+  }
+
+  const header = req.headers.authorization || "";
+  const [scheme, encoded] = header.split(" ");
+  if (scheme !== "Basic" || !encoded) {
+    res.set("WWW-Authenticate", 'Basic realm="OpenClaw Visuals"');
+    return res.status(401).send("Auth required");
+  }
+  const decoded = Buffer.from(encoded, "base64").toString("utf8");
+  const idx = decoded.indexOf(":");
+  const password = idx >= 0 ? decoded.slice(idx + 1) : "";
+  if (password !== VISUALS_PASSWORD) {
+    res.set("WWW-Authenticate", 'Basic realm="OpenClaw Visuals"');
+    return res.status(401).send("Invalid password");
+  }
+  return next();
+}
+
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
+
+fs.mkdirSync(VISUALS_OUT_DIR, { recursive: true });
+app.use(VISUALS_ROUTE, requireVisualsAuth, express.static(VISUALS_OUT_DIR, { extensions: ["html"] }));
 
 // Minimal health endpoint for Railway.
 app.get("/setup/healthz", (_req, res) => res.json({ ok: true }));
@@ -593,6 +624,19 @@ app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
 
 app.get("/setup/api/auth-groups", requireSetupAuth, (_req, res) => {
   res.json({ ok: true, authGroups: AUTH_GROUPS });
+});
+
+app.post("/setup/api/visuals/build", requireSetupAuth, async (_req, res) => {
+  try {
+    const result = await buildVisuals({
+      srcDir: VISUALS_SRC_DIR,
+      outDir: VISUALS_OUT_DIR,
+      publicBasePath: VISUALS_ROUTE,
+    });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) });
+  }
 });
 
 function buildOnboardArgs(payload) {

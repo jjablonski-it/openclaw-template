@@ -31,6 +31,11 @@ Required:
 Recommended:
 - `OPENCLAW_STATE_DIR=/data/.openclaw`
 - `OPENCLAW_WORKSPACE_DIR=/data/workspace`
+- `OPENCLAW_NOTES_DIR=/data/notes`
+- `OPENCLAW_VISUALS_SRC_DIR=/data/notes/visuals`
+- `OPENCLAW_VISUALS_OUT_DIR=/data/publish/html`
+- `OPENCLAW_VISUALS_ROUTE=/stories`
+- `OPENCLAW_VISUALS_PASSWORD=<short-password>`
 
 Optional:
 - `OPENCLAW_GATEWAY_TOKEN` — if not set, the wrapper generates one (not ideal). In a template, set it using a generated secret.
@@ -46,6 +51,7 @@ Then:
 - Visit `https://<your-app>.up.railway.app/setup`
 - Complete setup
 - Visit `https://<your-app>.up.railway.app/` and `/openclaw`
+- Protected interactive pages are served under `OPENCLAW_VISUALS_ROUTE` (default `/stories`) with Basic Auth password `OPENCLAW_VISUALS_PASSWORD`
 
 ## Support / community
 
