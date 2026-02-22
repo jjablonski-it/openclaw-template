@@ -7,6 +7,7 @@
 - **Notes:**
   - Always reply in English only, regardless of input language
   - Keep responses concise, concrete, and low-fluff
+  - When making repo changes that trigger Railway rebuilds, push to GitHub as the final step in a change batch
 
 ## Context
 
