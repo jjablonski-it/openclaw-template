@@ -64,6 +64,7 @@ When configuring systems, always optimize for long-term reliability and portabil
 - Include a compatibility path only as a temporary migration bridge (e.g., symlink), not permanent architecture.
 - Always add a verification step after changes (restart + read/write check).
 - Document the rationale so another operator can maintain it safely.
+- For third-party CLIs (e.g., Railway), persist auth/config under `/data` (or equivalent persistent volume), never only under ephemeral home directories.
 
 ## External vs Internal
 
