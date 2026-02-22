@@ -2,7 +2,7 @@
 
 ## Canonical paths
 
-- OpenClaw state/config: `/data/.clawdbot`
+- OpenClaw state/config: `/data/.openclaw`
 - Agent workspace: `/data/workspace`
 
 ## Why
@@ -13,7 +13,7 @@
 
 ## Required config
 
-Set in `/data/.clawdbot/openclaw.json`:
+Set in `/data/.openclaw/openclaw.json`:
 
 ```json
 {
@@ -27,10 +27,11 @@ Set in `/data/.clawdbot/openclaw.json`:
 
 ## Compatibility bridge during migration
 
-Use a temporary symlink to avoid breaking old references:
+Use temporary symlinks to avoid breaking old references:
 
 ```bash
 ln -sfn /data/workspace /root/.openclaw/workspace
+ln -sfn /data/.openclaw /data/.clawdbot
 ```
 
 ## Validation checklist
@@ -44,7 +45,8 @@ ln -sfn /data/workspace /root/.openclaw/workspace
 
 For reusable templates, expose these as env vars in compose/runtime scripts:
 
-- `OPENCLAW_HOME=/data/.clawdbot`
+- `OPENCLAW_STATE_DIR=/data/.openclaw`
+- `OPENCLAW_HOME=/data` (optional; keeps path resolution under `/data`)
 - `OPENCLAW_WORKSPACE=/data/workspace`
 
 Then render config from env during startup if not already set.
