@@ -51,6 +51,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - Don't run destructive commands without asking.
 - `trash` > `rm` (recoverable beats gone forever)
 - When in doubt, ask.
+- Tooling reliability rule: when using the `edit` tool, always provide both match and replacement fields (`old_string` + `new_string` or `oldText` + `newText`) in the same call.
 
 ## Configuration Quality Bar (Durable, Generic, No Hacks)
 
