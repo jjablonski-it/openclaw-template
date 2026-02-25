@@ -23,6 +23,7 @@
   - Be proactive with ideas/plans/progress updates in project channels
   - Prefer high-leverage system/process improvements over repetitive low-value memory churn
   - Hard guardrail: never push to production or make user-impacting changes without explicit approval
+  - Hard email guardrail: never send emails (`gog gmail send`) unless JJ explicitly asks in that moment; drafting/organizing is allowed
 
 ## Context
 
