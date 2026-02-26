@@ -34,12 +34,21 @@ done
 
 railway link -p "$PROJECT_ID" -e "$ENV_ID" -s "$SERVICE_ID" >/dev/null
 
-CURRENT_VALUE=$(railway variable list --json | python3 - <<PY
-import json,sys
-v=json.load(sys.stdin)
-print(v.get('${VAR_KEY}',''))
+TMP_VARS_FILE=$(mktemp)
+railway variable list --json > "$TMP_VARS_FILE"
+CURRENT_VALUE=$(python3 - <<PY
+import json
+from pathlib import Path
+raw = Path('${TMP_VARS_FILE}').read_text()
+start = raw.find('{')
+if start == -1:
+    print('')
+    raise SystemExit(0)
+obj = json.loads(raw[start:])
+print(obj.get('${VAR_KEY}',''))
 PY
 )
+rm -f "$TMP_VARS_FILE"
 
 echo "Current ${VAR_KEY}: ${CURRENT_VALUE}"
 echo "Target  ${VAR_KEY}: ${TARGET_VERSION}"
