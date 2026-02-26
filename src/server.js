@@ -50,6 +50,10 @@ const VISUALS_PASSWORD = process.env.OPENCLAW_VISUALS_PASSWORD?.trim();
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
 
+// Security default: do NOT expose OpenClaw control plane publicly unless explicitly enabled.
+// Set OPENCLAW_EXPOSE_CONTROL_UI=true only when you intentionally want public Control UI proxying.
+const EXPOSE_CONTROL_UI = process.env.OPENCLAW_EXPOSE_CONTROL_UI === "true";
+
 // Gateway admin token (protects OpenClaw gateway + Control UI).
 // Must be stable across restarts. If not provided via env, persist it in the state dir.
 function resolveGatewayToken() {
@@ -1404,6 +1408,12 @@ app.use(async (req, res) => {
     }
   }
 
+  // Block public access to proxied control plane by default.
+  // Keep /setup and explicit wrapper routes available; deny generic proxying unless enabled.
+  if (!EXPOSE_CONTROL_UI) {
+    return res.status(404).type("text/plain").send("Not Found");
+  }
+
   attachGatewayAuthHeader(req);
   return proxy.web(req, res, { target: GATEWAY_TARGET });
 });
@@ -1423,6 +1433,7 @@ const server = app.listen(PORT, "0.0.0.0", async () => {
 
   console.log(`[wrapper] gateway token: ${OPENCLAW_GATEWAY_TOKEN ? "(set)" : "(missing)"}`);
   console.log(`[wrapper] gateway target: ${GATEWAY_TARGET}`);
+  console.log(`[wrapper] expose control ui: ${EXPOSE_CONTROL_UI}`);
   if (!SETUP_PASSWORD) {
     console.warn("[wrapper] WARNING: SETUP_PASSWORD is not set; /setup will error.");
   }
