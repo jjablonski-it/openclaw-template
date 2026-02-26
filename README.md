@@ -60,6 +60,7 @@ Then:
 
 If you’re filing a bug, please include the output of:
 - `/healthz`
+- `/readyz`
 - `/setup/api/debug` (after authenticating to /setup)
 
 ## Getting chat tokens (so you don’t have to scramble)
@@ -151,6 +152,35 @@ The Control UI connects using `gateway.remote.token` and the gateway validates `
 Fix:
 - Re-run `/setup` so the wrapper writes both tokens.
 - Or set both values to the same token in config.
+
+## Safe rollout without staging (auto-rollback gate)
+
+You can roll out OpenClaw version changes on Railway without a full staging app by using a strict readiness+smoke rollback gate.
+
+Scripts added:
+- `scripts/smoke-openclaw.sh` — checks `/healthz`, `/readyz`, and local OpenClaw status commands.
+- `scripts/railway-rollout-openclaw.sh` — updates version variable, waits for readiness, runs smoke checks, and auto-rolls back on failure.
+
+Example (dry-run):
+
+```bash
+scripts/railway-rollout-openclaw.sh \
+  --project <projectId> \
+  --service <serviceId> \
+  --env <environmentId> \
+  --target v2026.2.24 \
+  --url https://your-app.up.railway.app
+```
+
+Apply for real:
+
+```bash
+scripts/railway-rollout-openclaw.sh ... --apply
+```
+
+Notes:
+- Default variable key is `OPENCLAW_GIT_REF` (override with `--var-key` if your setup differs).
+- Still require explicit human approval before production changes.
 
 ### “Application failed to respond” / 502 Bad Gateway
 

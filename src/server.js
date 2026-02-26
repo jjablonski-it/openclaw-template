@@ -334,7 +334,28 @@ app.use(express.json({ limit: "1mb" }));
 fs.mkdirSync(VISUALS_OUT_DIR, { recursive: true });
 app.use(VISUALS_ROUTE, requireVisualsAuth, express.static(VISUALS_OUT_DIR, { extensions: ["html"] }));
 
-// Minimal health endpoint for Railway.
+// Health endpoints for Railway and rollout checks.
+// /healthz: liveness (process is up)
+app.get("/healthz", (_req, res) => {
+  res.json({ ok: true, service: "wrapper", ts: new Date().toISOString() });
+});
+
+// /readyz: readiness (configured + gateway reachable)
+app.get("/readyz", async (_req, res) => {
+  if (!isConfigured()) {
+    return res.status(503).json({ ok: false, reason: "not_configured" });
+  }
+  try {
+    await ensureGatewayRunning();
+    const ready = await waitForGatewayReady({ timeoutMs: 5000 });
+    if (!ready) return res.status(503).json({ ok: false, reason: "gateway_not_ready" });
+    return res.json({ ok: true, service: "wrapper+gateway", ts: new Date().toISOString() });
+  } catch (err) {
+    return res.status(503).json({ ok: false, reason: "gateway_start_failed", error: String(err) });
+  }
+});
+
+// Backward-compatible setup health endpoint.
 app.get("/setup/healthz", (_req, res) => res.json({ ok: true }));
 
 async function probeGateway() {
