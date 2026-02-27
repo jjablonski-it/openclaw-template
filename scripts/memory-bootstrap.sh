@@ -11,6 +11,15 @@ LONG_TERM_FILE="$ROOT_DIR/MEMORY.md"
 
 mkdir -p "$MEMORY_DIR"
 
+CHANNELS_ROOT="$MEMORY_DIR/channels"
+DEFAULT_CHANNEL_KEYS=("notifast" "harry-prompter" "work")
+CHANNEL_KEYS=("${DEFAULT_CHANNEL_KEYS[@]}")
+
+# Optional override/extension via env var, e.g. OPENCLAW_CHANNEL_MEMORY_KEYS="notifast,harry-prompter,work,new-channel"
+if [[ -n "${OPENCLAW_CHANNEL_MEMORY_KEYS:-}" ]]; then
+  IFS=',' read -r -a CHANNEL_KEYS <<<"$OPENCLAW_CHANNEL_MEMORY_KEYS"
+fi
+
 ensure_daily_file() {
   local file_path="$1"
   local day="$2"
@@ -29,6 +38,42 @@ EOF
 
 ensure_daily_file "$TODAY_FILE" "$TODAY_UTC"
 ensure_daily_file "$YESTERDAY_FILE" "$YESTERDAY_UTC"
+
+# Ensure per-channel isolated memory files exist for both UTC today and UTC yesterday.
+mkdir -p "$CHANNELS_ROOT"
+for channel_key in "${CHANNEL_KEYS[@]}"; do
+  # Trim whitespace and skip empty entries
+  channel_key="$(echo "$channel_key" | xargs)"
+  [[ -z "$channel_key" ]] && continue
+
+  channel_dir="$CHANNELS_ROOT/$channel_key"
+  mkdir -p "$channel_dir"
+
+  channel_today_file="$channel_dir/$TODAY_UTC.md"
+  channel_yesterday_file="$channel_dir/$YESTERDAY_UTC.md"
+
+  if [[ ! -f "$channel_today_file" ]]; then
+    cat >"$channel_today_file" <<EOF
+# $TODAY_UTC ($channel_key)
+
+- Daily channel note initialized.
+EOF
+    echo "Created: $channel_today_file"
+  else
+    echo "Exists:  $channel_today_file"
+  fi
+
+  if [[ ! -f "$channel_yesterday_file" ]]; then
+    cat >"$channel_yesterday_file" <<EOF
+# $YESTERDAY_UTC ($channel_key)
+
+- Daily channel note initialized.
+EOF
+    echo "Created: $channel_yesterday_file"
+  else
+    echo "Exists:  $channel_yesterday_file"
+  fi
+done
 
 if [[ ! -f "$LONG_TERM_FILE" ]]; then
   cat >"$LONG_TERM_FILE" <<'EOF'
