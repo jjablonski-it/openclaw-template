@@ -51,6 +51,11 @@ RUN apt-get update \
     python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
+# Provide the Docker CLI so OpenClaw tools/sandbox that shell out to `docker`
+# don't crash with "spawn docker ENOENT".  Only the CLI binary is needed;
+# the daemon is not expected inside the Railway container.
+COPY --from=docker:27-cli /usr/local/bin/docker /usr/local/bin/docker
+
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 
